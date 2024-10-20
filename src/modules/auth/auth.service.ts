@@ -31,13 +31,13 @@ export class AuthService {
         ...registerDto,
         password: hashedPassword,
       };
-      this.logger.warn(
+      this.logger.log(
         `Inserindo registro de usuário(name: ${registerDto.name}, email: ${registerDto.email})`,
       );
 
       await this.userRepository.save(user);
 
-      this.logger.warn(
+      this.logger.log(
         `Usuário registrado(name: ${registerDto.name}, email: ${registerDto.email})`,
       );
 
@@ -58,7 +58,7 @@ export class AuthService {
 
   async login(email: string, pass: string): Promise<object> {
     try {
-      this.logger.warn(`Buscando usuário (email: ${email})`);
+      this.logger.log(`Buscando usuário (email: ${email})`);
       const user = await this.userRepository.findOne({
         where: { email: email },
       });
@@ -67,18 +67,18 @@ export class AuthService {
         : false;
 
       if (!user) {
-        this.logger.warn(`Usuário não encontrado(email: ${email})`);
+        this.logger.log(`Usuário não encontrado(email: ${email})`);
         throw new NotFoundException(`Usuário não encontrado(email: ${email})`);
       }
 
       if (!validatePassword) {
-        this.logger.warn("Senha incorreta para usuario: " + email);
+        this.logger.log("Senha incorreta para usuario: " + email);
         throw new UnauthorizedException("Email ou senha inválido(s).");
       }
 
-      this.logger.warn(`Criando token para o usuário (email: ${email})`);
+      this.logger.log(`Criando token para o usuário (email: ${email})`);
       const access_token = this.jwtService.sign({ userEmail: email });
-      this.logger.warn(`Token criado para o usuário (email: ${email})`);
+      this.logger.log(`Token criado para o usuário (email: ${email})`);
 
       return {
         access_token,

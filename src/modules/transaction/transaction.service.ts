@@ -49,11 +49,11 @@ export class TransactionService {
   ) {}
 
   async createTransaction(transfer: Transfer): Promise<boolean> {
-    this.logger.warn(
+    this.logger.log(
       `Criando transação para a transferência de saldo (to: ${transfer.targetUserEmail}, from: ${transfer.originUserEmail})`,
     );
     if (transfer.id) {
-      this.logger.warn(
+      this.logger.log(
         `A transação é um estorno do protocolo: ${transfer.protocol}`,
       );
       const transactionUpdated = await this.transactionRepository.update(
@@ -72,13 +72,13 @@ export class TransactionService {
         );
       }
 
-      this.logger.warn(
+      this.logger.log(
         `A transação do protocolo "${transfer.protocol}" foi estornada!`,
       );
       return transactionUpdated.affected === 1;
     }
     await this.transactionRepository.save(transfer);
-    this.logger.warn(
+    this.logger.log(
       `É uma nova transação e o protocolo é: ${transfer.protocol}`,
     );
     return true;
@@ -94,14 +94,14 @@ export class TransactionService {
       transaction,
     } = transfer;
     const queryRunner = this.dataSource.createQueryRunner();
-    this.logger.warn(
+    this.logger.log(
       "Iniciando 'DataSource Transaction' para realizar transferência de valores.",
     );
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    this.logger.warn("'DataSource Transaction' iniciado.");
+    this.logger.log("'DataSource Transaction' iniciado.");
     try {
-      this.logger.warn("Buscando usuarios no banco.");
+      this.logger.log("Buscando usuarios no banco.");
       const [user1, user2] = await Promise.all([
         queryRunner.manager.findOne(User, {
           where: { email: originUserEmail },
@@ -149,7 +149,7 @@ export class TransactionService {
         (Number(user2.balance) + Number(amountTransferred)).toFixed(2),
       );
 
-      this.logger.warn("Iniciando transferência de valores.");
+      this.logger.log("Iniciando transferência de valores.");
       const protocol = transfer.protocol || uuidv4();
       await Promise.all([
         this.createTransaction({
@@ -164,10 +164,10 @@ export class TransactionService {
         queryRunner.manager.save(user1),
         queryRunner.manager.save(user2),
       ]);
-      this.logger.warn("Valores transferidos com sucesso!");
-      this.logger.warn("Finalizando 'DataSource Transaction'.");
+      this.logger.log("Valores transferidos com sucesso!");
+      this.logger.log("Finalizando 'DataSource Transaction'.");
       await queryRunner.commitTransaction();
-      this.logger.warn("'DataSource Transaction' finalizado!");
+      this.logger.log("'DataSource Transaction' finalizado!");
       const isRefund: boolean = id ? true : false;
       let toUser: User = user2;
       let fromUser: User = user1;
@@ -193,10 +193,10 @@ export class TransactionService {
   }
 
   getUserEmailByToken(): string {
-    this.logger.warn("Buscando email do usuário logado");
+    this.logger.log("Buscando email do usuário logado");
     const token = this.req.headers["authorization"].split(" ")[1];
     const userEmail = this.jwtService.verify(token).userEmail;
-    this.logger.warn("Usuário logado: " + userEmail);
+    this.logger.log("Usuário logado: " + userEmail);
     return userEmail;
   }
 
@@ -220,7 +220,7 @@ export class TransactionService {
 
   async refundBalance(refundDto: RefundDto) {
     const { originEmail, targetEmail } = refundDto;
-    this.logger.warn(
+    this.logger.log(
       `Buscando transação no banco para realizar o estorno. usuarios (to: ${targetEmail}, from: ${originEmail})`,
     );
     const transaction = await this.transactionRepository.findOne({
@@ -239,7 +239,7 @@ export class TransactionService {
       );
     }
 
-    this.logger.warn(
+    this.logger.log(
       "Transação encontrada, inciando estorno. transactionId: " +
           transaction.id,
     );
@@ -268,7 +268,7 @@ export class TransactionService {
     refundDto: RefundByProtocolDto,
   ) {
     try {
-      this.logger.warn(
+      this.logger.log(
         "Buscando transação no banco para realizar o estorno. protocolo: " +
           protocol,
       );
@@ -287,7 +287,7 @@ export class TransactionService {
         );
       }
 
-      this.logger.warn(
+      this.logger.log(
         "Transação encontrada, inciando estorno. transactionId: " +
           transaction.id,
       );
